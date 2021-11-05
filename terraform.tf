@@ -16,20 +16,20 @@ provider "aws" {
   profile = "geekshubs"
 }
 
-#vpc_uve aquí es una label interna
-resource "aws_vpc" "vpc_uve" {
+#vpc aquí es una label interna
+resource "aws_vpc" "vpc" {
   cidr_block       = "10.0.16.0/24"
   instance_tenancy = "default"
 
   tags = {
-    Name = "uve"
+    Name = "vpc uve example"
   }
 }
 
-resource "aws_subnet" "subnet_uve" {
-  vpc_id            = aws_vpc.vpc_uve.id
+resource "aws_subnet" "subnet" {
+  vpc_id            = aws_vpc.vpc.id
   #cidr_block        = "10.0.16.0/24"
-  cidr_block        = aws_vpc.vpc_uve.cidr_block #para coger todo el bloque de ips
+  cidr_block        = aws_vpc.vpc.cidr_block #para coger todo el bloque de ips
   availability_zone = "eu-west-1a"
 
   tags = {
@@ -38,11 +38,11 @@ resource "aws_subnet" "subnet_uve" {
 }
 
 resource "aws_network_interface" "network_interface_uve" {
-  subnet_id   = aws_subnet.subnet_uve.id
+  subnet_id   = aws_subnet.subnet.id
   private_ips = ["10.0.16.101"]
 
   tags = {
-    Name = "primary_network_interface"
+    Name = "primary_network_interface uve example"
   }
 }
 
@@ -63,5 +63,9 @@ resource "aws_instance" "app_server" {
   network_interface {
     network_interface_id = aws_network_interface.network_interface_uve.id
     device_index         = 0
+  }  
+
+  tags = {
+    Name = "aws_instance uve example"
   }  
 }
