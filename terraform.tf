@@ -28,7 +28,8 @@ resource "aws_vpc" "vpc_uve" {
 
 resource "aws_subnet" "subnet_uve" {
   vpc_id            = aws_vpc.vpc_uve.id
-  cidr_block        = "10.0.16.0/24"
+  #cidr_block        = "10.0.16.0/24"
+  cidr_block        = aws_vpc.vpc_uve.cidr_block #para coger todo el bloque de ips
   availability_zone = "eu-west-1a"
 
   tags = {
@@ -45,8 +46,18 @@ resource "aws_network_interface" "network_interface_uve" {
   }
 }
 
+data "aws_ami" "nginx" {
+    owners = ["979382823631"]
+
+    filter {
+        name   = "name"
+        values = ["bitnami-nginx-1.18.0-32-r09-linux-debian-10-x86_64-hvm-ebs-nami*"]
+    }
+}
+
 resource "aws_instance" "app_server" {
-  ami           = "ami-0ed961fa828560210"
+  #ami           = "ami-0ed961fa828560210" #el problema del amiid es que pueden ser deprecadas (y lo són), aparte la ami con ese id está diponible sólo para una región
+  ami           = data.aws_ami.nginx.id
   instance_type = "t2.micro"
 
   network_interface {
