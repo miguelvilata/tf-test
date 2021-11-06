@@ -11,39 +11,63 @@ terraform {
   }
 }
 
-provider "aws" {
-  region  = "eu-west-1"
-  profile = "geekshubs"
+variable "tags" {
+    type    = map(string)
+    default = { "Author" = "Terraformed Automated", "Env" = "Prod" }
 }
+
+# provider "aws" {
+#   region  = "eu-west-1"
+#   profile = "geekshubs"
+# }
 
 #vpc aquí es una label interna
 resource "aws_vpc" "vpc" {
   cidr_block       = "10.0.16.0/24"
   instance_tenancy = "default"
 
-  tags = {
-    Name = "vpc uve example"
-  }
+  tags = merge({ Name = "VPC test" }, var.tags)
 }
 
 resource "aws_subnet" "subnet" {
-  vpc_id            = aws_vpc.vpc.id
-  #cidr_block        = "10.0.16.0/24"
-  cidr_block        = aws_vpc.vpc.cidr_block #para coger todo el bloque de ips
-  availability_zone = "eu-west-1a"
+  vpc_id                    = aws_vpc.vpc.id
+  #cidr_block               = "10.0.16.0/24"
+  cidr_block                = aws_vpc.vpc.cidr_block #para coger todo el bloque de ips
+  availability_zone         = "eu-west-1a"
 
-  tags = {
-    Name = "uve subnet example"
+  tags = merge({ Name = "Subnet public" }, var.tags)
+}
+
+#route table que utiliza el gateway
+resource "aws_route_table" "route_table_public" {
+  vpc_id = aws_vpc.vpc.id
+  
+  route {
+      cidr_block = "0.0.0.0/0"
+      gateway_id = aws_internet_gateway.igw.id
   }
+  
+  tags = merge({ Name = "Route table" }, var.tags)
+}
+
+#asociar la ruta a la subnet, para conectarla con el gateway
+resource "aws_route_table_association" "rta_subnet_public" {
+  subnet_id      = aws_subnet.subnet.id
+  route_table_id = "${aws_route_table.route_table_public.id}"
 }
 
 resource "aws_network_interface" "network_interface_uve" {
   subnet_id   = aws_subnet.subnet.id
   private_ips = ["10.0.16.101"]
 
-  tags = {
-    Name = "primary_network_interface uve example"
-  }
+  tags = merge({ Name = "Private network public" }, var.tags)
+}
+
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = merge({ Name = "Internet Gateway" }, var.tags)
 }
 
 data "aws_ami" "nginx" {
@@ -57,15 +81,22 @@ data "aws_ami" "nginx" {
 
 resource "aws_instance" "app_server" {
   #ami           = "ami-0ed961fa828560210" #el problema del amiid es que pueden ser deprecadas (y lo són), aparte la ami con ese id está diponible sólo para una región
-  ami           = data.aws_ami.nginx.id
-  instance_type = "t2.micro"
+  ami                           = data.aws_ami.nginx.id
+  instance_type                 = "t2.micro"
+  subnet_id                     = aws_subnet.subnet.id
+  associate_public_ip_address   = true
 
-  network_interface {
-    network_interface_id = aws_network_interface.network_interface_uve.id
-    device_index         = 0
-  }  
+#  network_interface {
+#    network_interface_id = aws_network_interface.network_interface_uve.id
+#    device_index         = 0
+#  }  
 
-  tags = {
-    Name = "aws_instance uve example"
-  }  
+  tags = merge({ Name = "EC2 instance" }, var.tags)
 }
+
+output "app_server_ip" {
+    value = aws_instance.app_server.public_ip
+}
+
+#crear internet gateway
+#   añadir ruta
