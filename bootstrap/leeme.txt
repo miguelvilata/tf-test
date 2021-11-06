@@ -1,0 +1,4 @@
+para hacer un setup de lo que necesita el resto del sistema, por ejemplo la bd dynamo para hacer el clock del estado, y los buckets
+
+aquí no pasaría nada por guardar el estado en local
+
