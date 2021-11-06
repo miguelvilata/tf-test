@@ -11,9 +11,14 @@ terraform {
   }
 }
 
+variable "public_key_path" {
+    description = "Public key path"
+    default = "~/.ssh/id_rsa.pub"
+}
+
 variable "tags" {
     type    = map(string)
-    default = { "Author" = "Terraformed Automated", "Env" = "Prod" }
+    default = { "Author" = "Terraformed Automated (UVE)", "Env" = "Prod", "Name" = "UVE" }
 }
 
 # provider "aws" {
@@ -26,7 +31,7 @@ resource "aws_vpc" "vpc" {
   cidr_block       = "10.0.16.0/24"
   instance_tenancy = "default"
 
-  tags = merge({ Name = "VPC test" }, var.tags)
+  tags = merge({ name = "VPC test" }, var.tags)
 }
 
 resource "aws_subnet" "subnet" {
@@ -35,10 +40,28 @@ resource "aws_subnet" "subnet" {
   cidr_block                = aws_vpc.vpc.cidr_block #para coger todo el bloque de ips
   availability_zone         = "eu-west-1a"
 
-  tags = merge({ Name = "Subnet public" }, var.tags)
+  tags = merge({ name = "Subnet public" }, var.tags)
 }
 
 #route table que utiliza el gateway
+#--> me indica el profe, que aquí se debeŕia modificar la ruta existente o algo así
+#--> aquí lo que estaría haciendo es crear una nueva
+
+
+/*
+el ha utilizado una data, para localizar la route table de la vpc y luego agregar el GT"
+data "aws_route_table" "table_id" {
+    vpc_id = aws_vpc.my_vpc.id_rsa
+    depends_on = [aws_vpc-my_vpc]
+}
+
+resource "aws_route" "ruta" {
+    route_table_id = data.aws_route_table.table_id.id
+    gateway_id = aws_internet_gateway.gw.id
+    destination_cidr_block = "0.0.0.0/0"
+}
+*/
+
 resource "aws_route_table" "route_table_public" {
   vpc_id = aws_vpc.vpc.id
   
@@ -47,34 +70,30 @@ resource "aws_route_table" "route_table_public" {
       gateway_id = aws_internet_gateway.igw.id
   }
   
-  tags = merge({ Name = "Route table" }, var.tags)
+  tags = merge({ name = "Route table" }, var.tags)
 }
 
 #asociar la ruta a la subnet, para conectarla con el gateway
 resource "aws_route_table_association" "rta_subnet_public" {
   subnet_id      = aws_subnet.subnet.id
-  route_table_id = "${aws_route_table.route_table_public.id}"
+  route_table_id = aws_route_table.route_table_public.id
 }
-
-resource "aws_network_interface" "network_interface_uve" {
-  subnet_id   = aws_subnet.subnet.id
-  private_ips = ["10.0.16.101"]
-
-  tags = merge({ Name = "Private network public" }, var.tags)
-}
-
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
 
-  tags = merge({ Name = "Internet Gateway" }, var.tags)
+  tags = merge({ name = "Internet Gateway" }, var.tags)
 }
 
+resource "aws_key_pair" "ec2key" {
+  key_name = "publicKey"
+  public_key = "${file(var.public_key_path)}"
+}
 
 resource "aws_security_group" "sg_ssh_http" {
-  name = "sg_22"
+  name = "sg_ssh_http"
 
-  vpc_id = "${aws_vpc.vpc.id}"  
+  vpc_id = aws_vpc.vpc.id
   
   ingress {
       from_port   = 22
@@ -97,7 +116,7 @@ resource "aws_security_group" "sg_ssh_http" {
     cidr_blocks = ["0.0.0.0/0"]
   }  
   
-  tags = merge({ Name = "http & ssh access" }, var.tags)
+  tags = merge({ name = "http & ssh access" }, var.tags)
 }
 
 data "aws_ami" "nginx" {
@@ -112,17 +131,15 @@ data "aws_ami" "nginx" {
 resource "aws_instance" "app_server" {
   #ami           = "ami-0ed961fa828560210" #el problema del amiid es que pueden ser deprecadas (y lo són), aparte la ami con ese id está diponible sólo para una región
   ami                           = data.aws_ami.nginx.id
-  instance_type                 = "t2.micro"
+  instance_type                 = "t3.micro"
   subnet_id                     = aws_subnet.subnet.id
   associate_public_ip_address   = true
   vpc_security_group_ids        = [aws_security_group.sg_ssh_http.id]
 
-#  network_interface {
-#    network_interface_id = aws_network_interface.network_interface_uve.id
-#    device_index         = 0
-#  }  
+  #ssh bitnami@ip
+  key_name                      = aws_key_pair.ec2key.key_name
 
-  tags = merge({ Name = "EC2 instance" }, var.tags)
+  tags = merge({ name = "EC2 instance" }, var.tags)
 }
 
 output "app_server_ip" {
