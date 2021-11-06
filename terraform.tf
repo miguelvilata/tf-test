@@ -70,6 +70,36 @@ resource "aws_internet_gateway" "igw" {
   tags = merge({ Name = "Internet Gateway" }, var.tags)
 }
 
+
+resource "aws_security_group" "sg_ssh_http" {
+  name = "sg_22"
+
+  vpc_id = "${aws_vpc.vpc.id}"  
+  
+  ingress {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  } 
+
+  ingress {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  } 
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }  
+  
+  tags = merge({ Name = "http & ssh access" }, var.tags)
+}
+
 data "aws_ami" "nginx" {
     owners = ["979382823631"]
 
@@ -85,6 +115,7 @@ resource "aws_instance" "app_server" {
   instance_type                 = "t2.micro"
   subnet_id                     = aws_subnet.subnet.id
   associate_public_ip_address   = true
+  vpc_security_group_ids        = [aws_security_group.sg_ssh_http.id]
 
 #  network_interface {
 #    network_interface_id = aws_network_interface.network_interface_uve.id
@@ -100,3 +131,8 @@ output "app_server_ip" {
 
 #crear internet gateway
 #   añadir ruta
+
+
+
+#ver:
+#https://medium.com/@mitesh_shamra/manage-aws-vpc-with-terraform-d477d0b5c9c5
