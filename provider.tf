@@ -3,10 +3,8 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
-
-
 terraform {
-
+  
 # esto debería ir por entorno o tener una variable interpolada
 #  backend "s3" {
 #    bucket  = "terrafor-develops-dev"

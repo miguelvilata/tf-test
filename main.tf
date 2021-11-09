@@ -1,20 +1,15 @@
 
 module "web_vpc" {
-  path = "./modules/vpc"
+  source = "./modules/vpc"
 }
 
 module "web_server_prod" {
+  source          = "./modules/ec2"
   tags            = merge(var.default_tags, {})
-  path            = "./modules/ec2"
   cidr_block      = "10.0.1.0/24"
+  aws_vpc         = module.web_vpc.vpc_id
+  aws_subnet      = module.web_vpc.subnet_id
   instance_count  = 2
-}
-
-module "web_server_staging" {
-  tags            = merge(var.default_tags, {})
-  path            = "./modules/ec2"
-  cidr_block      = "10.0.1.0/24"
-  instance_count  = 1
 }
 
 #ver:
