@@ -1,9 +1,8 @@
-
 module "web_vpc" {
   source = "./modules/vpc"
 }
 
-module "web_server_prod" {
+module "module_ec2" {
   source          = "./modules/ec2"
   tags            = merge(var.default_tags, {})
   cidr_block      = "10.0.1.0/24"
