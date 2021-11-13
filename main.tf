@@ -1,14 +1,13 @@
-
 module "web_vpc" {
   source = "./modules/vpc"
 }
 
-module "web_server_prod" {
+module "module_ec2" {
   source          = "./modules/ec2"
   tags            = merge(var.default_tags, {})
   cidr_block      = "10.0.1.0/24"
   aws_vpc         = module.web_vpc.vpc_id
-  aws_subnet      = module.web_vpc.subnet_id
+  aws_subnet      = module.web_vpc.public_subnet_id
   instance_count  = 2
 }
 

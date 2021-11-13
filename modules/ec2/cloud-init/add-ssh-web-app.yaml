@@ -1,0 +1,27 @@
+#cloud-config
+# Add groups to the system
+# The following example adds the ubuntu group with members 'root' and 'sys'
+# and the empty group cloud-users.
+groups:
+  - ubuntu: [root,sys]
+  - cloud-users
+
+# Add users to the system. Users are added after groups are added.
+# Note: Most of these configuration options will not be honored if the user
+#       already exists. Following options are the exceptions and they are
+#       applicable on already-existing users:
+#       - 'plain_text_passwd', 'hashed_passwd', 'lock_passwd', 'sudo',
+#         'ssh_authorized_keys', 'ssh_redirect_user'.
+users:
+  - default
+  - name: barfoo
+    gecos: Bar B. Foo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    ssh_import_id:
+      - lp:falcojr
+      - gh:TheRealFalcon
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDWiCok+NMX2TzQfgdVad/LbVbX3SXilsGPU1CW0MG7R0BhulA9yEUyLbg4XZ4gUrxKYKBSbiVmWJOBV2N7/9qaq185tVk3dggi7XXNZkLps0MWOJEoPSbBpohXmQBDjgMb9P6DuRw0/mOYyK+A5b6tFxSTtmEFoQcOqusrrwZHGsjjCmseh+kp0u/p4W5RymLtR3hjWbgdc8Cq32W00i2fR5BcKVUt25aiRpe8NZP3BLw6iM2i+TdrlPW3813JH8ucdq/KVNdB634MCXf/7+CWpzzpWXlSA86Uxn41kEERNPABZxuOC4uJ8/9sepdlB2IAmFJyi3h/9M7hMwoiNZrGvvW1lkHT6ZPwPShLTu+6NXFqibadf1u9CdDJ+6E/o05Gh3STDj4sdIOLEc0FltRFazmhALq0oBztGAipcrnlWgwso4dGOrep8ElcR+xPHWxCLz/kh8vwUdJ7xTC+TXtX84DA5U2B+CGCrA4IV0BB+Lrm2r2IOg4yx9EVcDJCLH8= miguel@miguel-ZenBook-UX325EA-UX325EA
+      #- ${public_key}

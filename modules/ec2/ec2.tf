@@ -1,8 +1,8 @@
 
-resource "aws_key_pair" "ec2key" {
-  key_name = "publicKey"
-  public_key = file(var.public_key_path)
-}
+#resource "aws_key_pair" "ec2key" {
+#  key_name = "publicKey"
+#  public_key = file(var.public_key_path)
+#}
 
 resource "aws_security_group" "sg_ssh_http" {
   name = "sg_ssh_http"
@@ -49,9 +49,7 @@ resource "aws_instance" "app_server" {
   subnet_id                     = var.aws_subnet
   associate_public_ip_address   = true
   vpc_security_group_ids        = [aws_security_group.sg_ssh_http.id]
-
-  #ssh bitnami@ip
-  key_name                      = aws_key_pair.ec2key.key_name
+  user_data                     = data.template_file.user_data.rendered
 
   tags = merge({ name = "EC2 instance" }, var.tags)
 }
