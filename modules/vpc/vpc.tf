@@ -1,18 +1,25 @@
 #vpc aquí es una label interna
 resource "aws_vpc" "vpc" {
-  cidr_block       = "10.0.16.0/24"
+  cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
 
   tags = merge({ name = "VPC test" }, var.tags)
 }
 
-resource "aws_subnet" "subnet" {
+resource "aws_subnet" "public_subnet" {
   vpc_id                    = aws_vpc.vpc.id
-  #cidr_block               = "10.0.16.0/24"
-  cidr_block                = aws_vpc.vpc.cidr_block #para coger todo el bloque de ips
+  cidr_block                = "10.0.0.0/24"
   availability_zone         = "eu-west-1a"
 
   tags = merge({ name = "Subnet public" }, var.tags)
+}
+
+resource "aws_subnet" "private_subnet" {
+  vpc_id                    = aws_vpc.vpc.id
+  cidr_block                = "10.0.1.0/24"
+  availability_zone         = "eu-west-1a"
+
+  tags = merge({ name = "Subnet private" }, var.tags)
 }
 
 #route table que utiliza el gateway
@@ -53,7 +60,7 @@ resource "aws_route_table" "route_table_public" {
 
 #asociar la ruta a la subnet, para conectarla con el gateway
 resource "aws_route_table_association" "rta_subnet_public" {
-  subnet_id      = aws_subnet.subnet.id
+  subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.route_table_public.id
 }
 

@@ -1,4 +1,0 @@
-Tendrías aquí tu entorno de producción, reutilizando los módulos, pero se trataría como proyectos separados, para aplicar, te meterías en este folder y ejecutarías tu terrafor apply
-
-
-luego también el estado lo almacenarías en sitios distintos
